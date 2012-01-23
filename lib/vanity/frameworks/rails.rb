@@ -7,7 +7,11 @@ module Vanity
       # Do this at the very end of initialization, allowing you to change
       # connection adapter, turn collection on/off, etc.
       ::Rails.configuration.after_initialize do
-        Vanity.playground.load!
+        # Do not load Vanity if we are running the vanity migrations for the first time. If ab_tests are already defined,
+        # but the schema has not yet been migrated, it is impossible to run the migrations unless the experiments are not loaded.
+        unless (Vanity.playground.connection.present? && Vanity.playground.connection.is_a?(Vanity::Adapters::ActiveRecordAdapter) && (not ActiveRecord::Base.connection.table_exists? 'vanity_experiments'))
+          Vanity.playground.load!
+        end
       end
     end
 
